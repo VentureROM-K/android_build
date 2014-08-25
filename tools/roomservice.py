@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # Copyright (C) 2013 Cybojenix <anthonydking@gmail.com>
 # Copyright (C) 2013 The OmniROM Project
@@ -43,7 +43,7 @@ default_team_rem = "github"
 # this shouldn't change unless google makes changes
 local_manifest_dir = ".repo/local_manifests"
 # change this to your name on github (or equivalent hosting)
-android_team = "AOSPA"
+android_team = "AOSPA-legacy"
 
 
 def check_repo_exists(git_data):
@@ -88,18 +88,21 @@ def get_device_url(git_data):
                     "roomservice".format(device, android_team))
 
 
-def parse_device_directory(device_url):
+def parse_device_directory(device_url,device):
     to_strip = "android_device"
     repo_name = device_url[device_url.index(to_strip) + len(to_strip):]
+    repo_name = repo_name[:repo_name.index(device)]
     repo_dir = repo_name.replace("_", "/")
+    repo_dir = repo_dir + device
     return "device{}".format(repo_dir)
 
 
 # Thank you RaYmAn
-def iterate_manifests():
+def iterate_manifests(check_all):
     files = []
-    for file in os.listdir(local_manifest_dir):
-        files.append(os.path.join(local_manifest_dir, file))
+    if check_all:
+        for file in os.listdir(local_manifest_dir):
+            files.append(os.path.join(local_manifest_dir, file))
     files.append('.repo/manifest.xml')
     for file in files:
         try:
@@ -113,10 +116,18 @@ def iterate_manifests():
 
 
 def check_project_exists(url):
-    for project in iterate_manifests():
+    for project in iterate_manifests(True):
         if project.get("name") == url:
             return True
     return False
+
+
+def check_dup_path(directory):
+    for project in iterate_manifests(False):
+        if project.get("path") == directory:
+            print ("Duplicate path %s found! Removing" % directory)
+            return project.get("name")
+    return None
 
 
 # Use the indent function from http://stackoverflow.com/a/4590052
@@ -144,6 +155,12 @@ def create_manifest_project(url, directory,
     if project_exists:
         return None
 
+    dup_path = check_dup_path(directory)
+    if not dup_path is None:
+            write_to_manifest(
+                append_to_manifest(
+                    create_manifest_remove(dup_path)))
+
     project = ES.Element("project",
                          attrib={
                              "path": directory,
@@ -152,6 +169,11 @@ def create_manifest_project(url, directory,
                              "revision": revision
                          })
     return project
+
+
+def create_manifest_remove(url):
+    remove = ES.Element("remove-project", attrib={"name": url})
+    return remove
 
 
 def append_to_manifest(project):
@@ -177,7 +199,7 @@ def write_to_manifest(manifest):
 
 
 def parse_device_from_manifest(device):
-    for project in iterate_manifests():
+    for project in iterate_manifests(True):
         name = project.get('name')
         if name.startswith("android_device_") and name.endswith(device):
             return project.get('path')
@@ -237,7 +259,7 @@ def create_dependency_manifest(dependencies):
             write_to_manifest(manifest)
             projects.append(target_path)
     if len(projects) > 0:
-        os.system("repo sync %s" % " ".join(projects))
+        os.system("repo sync -f --no-clone-bundle %s" % " ".join(projects))
 
 
 def fetch_dependencies(device):
@@ -262,7 +284,7 @@ def fetch_device(device):
         return
     git_data = search_github_for_device(device)
     device_url = android_team+"/"+get_device_url(git_data)
-    device_dir = parse_device_directory(device_url)
+    device_dir = parse_device_directory(device_url,device)
     project = create_manifest_project(device_url,
                                       device_dir,
                                       remote=default_team_rem)
@@ -270,7 +292,7 @@ def fetch_device(device):
         manifest = append_to_manifest(project)
         write_to_manifest(manifest)
         print("syncing the device config")
-        os.system('repo sync %s' % device_dir)
+        os.system('repo sync -f --no-clone-bundle %s' % device_dir)
 
 
 if __name__ == '__main__':
