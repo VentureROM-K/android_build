@@ -45,13 +45,14 @@ ifeq (0,$(shell expr $$(echo $(MAKE_VERSION) | sed "s/[^0-9\.].*//") = 3.82))
 ifeq (0,$(shell expr $$(echo $(MAKE_VERSION) | sed "s/[^0-9\.].*//") = 4.0))
 $(warning ********************************************************************************)
 $(warning *  You are using version $(MAKE_VERSION) of make.)
-$(warning *  Android is tested to build with versions 3.81, 3.82 and 4.0)
+$(warning *  Android can only be built by versions 3.81 3.82 and 4.0.)
 $(warning *  see https://source.android.com/source/download.html)
 $(warning ********************************************************************************)
+$(error stopping)
 endif
 endif
 endif
-endif
+endif 
 
 # Absolute path of the present working direcotry.
 # This overrides the shell variable $PWD, which does not necessarily points to
@@ -101,14 +102,8 @@ include $(BUILD_SYSTEM)/config.mk
 # be generated correctly
 include $(BUILD_SYSTEM)/cleanbuild.mk
 
-# Bring in Qualcomm helper macros
-include $(BUILD_SYSTEM)/qcom_utils.mk
-
 # Include the google-specific config
 -include vendor/google/build/config.mk
-
-# Include the extra device config
--include vendor/extra/device.mk
 
 VERSION_CHECK_SEQUENCE_NUMBER := 3
 -include $(OUT_DIR)/versions_checked.mk
@@ -447,7 +442,6 @@ else	# !SDK_ONLY
 subdirs := $(TOP)
 
 FULL_BUILD := true
-  
 
 endif	# !SDK_ONLY
 
@@ -492,7 +486,7 @@ ifneq ($(dont_bother),true)
 subdir_makefiles := \
 	$(shell build/tools/findleaves.py --prune=$(OUT_DIR) --prune=.repo --prune=.git $(subdirs) Android.mk)
 
-$(foreach mk, $(subdir_makefiles), $(eval include $(mk)))
+$(foreach mk, $(subdir_makefiles), $(info including $(mk) ...)$(eval include $(mk)))
 
 endif # dont_bother
 
@@ -518,7 +512,7 @@ ifneq ($(filter-out $(GRANDFATHERED_ALL_PREBUILT),$(strip $(notdir $(ALL_PREBUIL
   $(warning *)
   $(foreach bad_prebuilt,$(filter-out $(GRANDFATHERED_ALL_PREBUILT),$(strip $(notdir $(ALL_PREBUILT)))),$(warning * unexpected $(bad_prebuilt) in ALL_PREBUILT))
   $(warning *)
-  $(error ALL_PREBUILT contains unexpected files)  
+  $(error ALL_PREBUILT contains unexpected files)
 endif
 
 # -------------------------------------------------------------------
