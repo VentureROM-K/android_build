@@ -159,11 +159,6 @@ endif
 TARGET_DEVICE_DIR := $(patsubst %/,%,$(dir $(board_config_mk)))
 board_config_mk :=
 
-## Rebuild the pathmap if there's a recovery variant. Its path probably changed
-ifneq ($(RECOVERY_VARIANT),)
-include $(BUILD_SYSTEM)/pathmap.mk
-endif
-
 # Perhaps we should move this block to build/core/Makefile,
 # once we don't have TARGET_NO_KERNEL reference in AndroidBoard.mk/Android.mk.
 ifneq ($(strip $(TARGET_NO_BOOTLOADER)),true)
@@ -480,14 +475,5 @@ TARGET_PREBUILT_TAG := android-$(TARGET_ARCH)
 RS_PREBUILT_CLCORE := prebuilts/sdk/renderscript/lib/$(TARGET_ARCH)/libclcore.bc
 RS_PREBUILT_LIBPATH := -L prebuilts/ndk/8/platforms/android-9/arch-$(TARGET_ARCH)/usr/lib
 RS_PREBUILT_COMPILER_RT := prebuilts/sdk/renderscript/lib/$(TARGET_ARCH)/libcompiler_rt.a
-
-# Rules for QCOM targets
-include $(BUILD_SYSTEM)/qcom_target.mk
-
-## ifneq ($(CM_BUILD),)
-## We need to be sure the global selinux policies are included
-## last, to avoid accidental resetting by device configs
-$(eval include vendor/venture/sepolicy/sepolicy.mk)
-## endif
 
 include $(BUILD_SYSTEM)/dumpvar.mk

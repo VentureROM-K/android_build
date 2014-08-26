@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 # Copyright (C) 2013 Cybojenix <anthonydking@gmail.com>
 # Copyright (C) 2013 The OmniROM Project
@@ -43,7 +43,7 @@ default_team_rem = "github"
 # this shouldn't change unless google makes changes
 local_manifest_dir = ".repo/local_manifests"
 # change this to your name on github (or equivalent hosting)
-android_team = "AOSPA-legacy"
+android_team = "AOSPA"
 
 
 def check_repo_exists(git_data):
@@ -88,12 +88,10 @@ def get_device_url(git_data):
                     "roomservice".format(device, android_team))
 
 
-def parse_device_directory(device_url,device):
+def parse_device_directory(device_url):
     to_strip = "android_device"
     repo_name = device_url[device_url.index(to_strip) + len(to_strip):]
-    repo_name = repo_name[:repo_name.index(device)]
     repo_dir = repo_name.replace("_", "/")
-    repo_dir = repo_dir + device
     return "device{}".format(repo_dir)
 
 
@@ -259,7 +257,7 @@ def create_dependency_manifest(dependencies):
             write_to_manifest(manifest)
             projects.append(target_path)
     if len(projects) > 0:
-        os.system("repo sync -f --no-clone-bundle %s" % " ".join(projects))
+        os.system("repo sync %s" % " ".join(projects))
 
 
 def fetch_dependencies(device):
@@ -284,7 +282,7 @@ def fetch_device(device):
         return
     git_data = search_github_for_device(device)
     device_url = android_team+"/"+get_device_url(git_data)
-    device_dir = parse_device_directory(device_url,device)
+    device_dir = parse_device_directory(device_url)
     project = create_manifest_project(device_url,
                                       device_dir,
                                       remote=default_team_rem)
@@ -292,7 +290,7 @@ def fetch_device(device):
         manifest = append_to_manifest(project)
         write_to_manifest(manifest)
         print("syncing the device config")
-        os.system('repo sync -f --no-clone-bundle %s' % device_dir)
+        os.system('repo sync %s' % device_dir)
 
 
 if __name__ == '__main__':
