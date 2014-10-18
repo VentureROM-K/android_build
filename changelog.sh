@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# To run this, simply cd to your schism folder and run:
+# To run this, simply cd to your build folder and run:
 
 # . build/changelog.sh :) *After syncing the repo.*
 
