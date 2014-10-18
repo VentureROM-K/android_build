@@ -27,22 +27,22 @@ do
     else
         # Prepend group project ownership to each project.
         origin=`grep "$project" $rdir/.repo/manifest.xml | awk {'print $4'} | cut -f2 -d '"'`
-        if [ "$origin" = "sch" ] || [ "$origin" = "github" ]; then
-            proj_credit=TheSchism
+        if [ "$origin" = "venture" ] || [ "$origin" = "github" ]; then
+            proj_credit=Venture
         elif [ "$origin" = "aosp" ]; then
             proj_credit=AOSP
         elif [ "$origin" = "cm" ]; then
             proj_credit=CyanogenMod
         else
-            proj_credit=TheSchism
+            proj_credit=Venture
         fi
         # Write the changelog
         echo "Project name: $project" >> "$rdir"/Schism_$cdate.txt
         echo "$log" | while read line
         do
-             echo "  - $line" >> "$rdir"/Schism_$cdate.txt
+             echo "  - $line" >> "$rdir"/Venture_$cdate.txt
         done
-        echo "" >> "$rdir"/Schism_$cdate.txt
+        echo "" >> "$rdir"/Venture_$cdate.txt
     fi
 done
 
