@@ -37,7 +37,7 @@ do
             proj_credit=Venture
         fi
         # Write the changelog
-        echo "Project name: $project" >> "$rdir"/Schism_$cdate.txt
+        echo "Project name: $project" >> "$rdir"/Venture_$cdate.txt
         echo "$log" | while read line
         do
              echo "  - $line" >> "$rdir"/Venture_$cdate.txt
