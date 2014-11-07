@@ -19,9 +19,9 @@
 
 PRODUCT_PACKAGES := \
     Dialer \
-    Mms \
     Stk \
-    rild \
-    CellBroadcastReceiver
-
-PRODUCT_COPY_FILES := \
+    CellBroadcastReceiver \
+    VoiceDialer \
+    InCallUI \
+    Mms \
+    rild

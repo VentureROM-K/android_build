@@ -92,17 +92,33 @@ class EdifyGenerator(object):
 
   def AssertDevice(self, device):
     """Assert that the device identifier is the given string."""
-    cmd = ('getprop("ro.product.device") == "%s" || '
-           'abort("This package is for \\"%s\\" devices; '
-           'this is a \\"" + getprop("ro.product.device") + "\\".");'
-           ) % (device, device)
-    self.script.append(cmd)
+    cmd = ('assert(' +
+           ' || \0'.join(['getprop("ro.product.device") == "%s" ||\0getprop("ro.build.product") == "%s"'
+                         % (i, i) for i in device.split(",")]) +
+           ' ||\0abort("This package is for device: %s; ' +
+           'this device is " + getprop("ro.product.device") + ".");' +
+           ');') % device
+    self.script.append(self._WordWrap(cmd))
 
   def AssertSomeBootloader(self, *bootloaders):
-    """Asert that the bootloader version is one of *bootloaders."""
+    """Assert that the bootloader version is one of *bootloaders."""
     cmd = ("assert(" +
            " ||\0".join(['getprop("ro.bootloader") == "%s"' % (b,)
                          for b in bootloaders]) +
+           ' ||\0abort("This package supports bootloader(s): ' +
+           ", ".join(["%s" % (b,) for b in bootloaders]) +
+           '; this device has bootloader: " + getprop("ro.bootloader") + ".");' +
+           ");")
+    self.script.append(self._WordWrap(cmd))
+
+  def AssertSomeBaseband(self, *basebands):
+    """Assert that the baseband version is one of *basebands."""
+    cmd = ("assert(" +
+           " ||\0".join(['getprop("ro.baseband") == "%s"' % (b,)
+                         for b in basebands]) +
+           ' ||\0abort("This package supports baseband(s): ' +
+           ", ".join(["%s" % (b,) for b in basebands]) +
+           '; this device has baseband: " + getprop("ro.baseband") + ".");' +
            ");")
     self.script.append(self._WordWrap(cmd))
 
@@ -111,8 +127,12 @@ class EdifyGenerator(object):
     self.script.append('delete("/system/addon.d/99-supersu.sh");')
     self.script.append('package_extract_file("system/bin/backuptool.sh", "/tmp/backuptool.sh");')
     self.script.append('package_extract_file("system/bin/backuptool.functions", "/tmp/backuptool.functions");')
-    self.script.append('set_perm(0, 0, 0777, "/tmp/backuptool.sh");')
-    self.script.append('set_perm(0, 0, 0644, "/tmp/backuptool.functions");')
+    if not self.info.get("use_set_metadata", False):
+      self.script.append('set_perm(0, 0, 0755, "/tmp/backuptool.sh");')
+      self.script.append('set_perm(0, 0, 0644, "/tmp/backuptool.functions");')
+    else:
+      self.script.append('set_metadata("/tmp/backuptool.sh", "uid", 0, "gid", 0, "mode", 0755);')
+      self.script.append('set_metadata("/tmp/backuptool.functions", "uid", 0, "gid", 0, "mode", 0644);')
     self.script.append(('run_program("/tmp/backuptool.sh", "%s");' % command))
     if command == "restore":
         self.script.append('delete("/system/bin/backuptool.sh");')
@@ -246,6 +266,11 @@ class EdifyGenerator(object):
       elif partition_type == "EMMC":
         self.script.append(
             'package_extract_file("%(fn)s", "%(device)s");' % args)
+      elif partition_type == "BML":
+          self.script.append(
+            ('assert(package_extract_file("%(fn)s", "/tmp/%(device)s.img"),\n'
+             '       write_raw_image("/tmp/%(device)s.img", "%(device)s"),\n'
+             '       delete("/tmp/%(device)s.img"));') % args)
       else:
         raise ValueError("don't know how to write \"%s\" partitions" % (p.fs_type,))
 
